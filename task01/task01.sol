@@ -255,7 +255,7 @@ contract BinarySearch{
         uint256 begin = 0;
         uint256 end = arr.length - 1;
         while(begin <= end) {
-            binary = begin  (end - begin) / 2;
+            binary = begin + (end - begin) / 2;
             if (search == arr[binary]) {
                 return int256(binary);
             } else if (search > arr[binary]) {

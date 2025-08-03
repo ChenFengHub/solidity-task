@@ -17,3 +17,9 @@ node_modules
 ignition/deployments/chain-31337
 
 .states/
+
+package-lock.json
+package.json
+/node_modules
+/.deps
+/artifacts
