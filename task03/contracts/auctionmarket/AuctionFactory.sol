@@ -8,21 +8,23 @@ contract AuctionFactory {
 
     Auction[] public auctions;
     uint256 public auctionsIndex = 0;
-    address internal ownder;
+    address internal owner;
 
-    constructor() {
-        ownder = msg.sender;
+    constructor(address _owner) {
+        owner = _owner;
     }
 
-    function createAuction(address _seller, 
+    function createAuction(address _owner,
+                           address _seller, 
                            uint256 _startPrice, 
                            address _nftContract, 
                            uint256 _nftTokenId, 
                            uint256 _duration, 
                            address _tokenAddress) public returns(uint256) {
-        require(msg.sender == ownder, "Only owner can create auction");
-        Auction auction = new Auction(msg.sender, _seller, block.timestamp, _startPrice, _nftContract, _nftTokenId, _duration, _tokenAddress);
-        auctions[auctionsIndex] = auction;
+        require(_owner == owner, "Only owner can create auction");
+        Auction auction = new Auction(owner, _seller, block.timestamp, _startPrice, 
+                                _nftContract, _nftTokenId, _duration, _tokenAddress);
+        auctions.push(auction);
         return auctionsIndex++;
     }
 

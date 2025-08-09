@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 // import "@openzeppelin/contracts/access/Ownable.sol";
+import "../bid/NFTBid.sol";
 
 
 contract Auction {
@@ -25,6 +26,7 @@ contract Auction {
     // 代币类型：address(0)-ehter;其他值-对应ERC20，比如USDC（一种与美元挂钩的稳定币，USDC/USC接近1:1）
     address internal tokenAddress;
 
+
     constructor(address _admin, 
                 address _seller, 
                 uint256 _startTime, 
@@ -34,8 +36,8 @@ contract Auction {
                 uint256 _duration, 
                 address _tokenAddress) {
         require(_admin != address(0), "Owner address cannot be zero");
-        require(_admin == msg.sender, "Seller address cannot be zero");
         require(_nftContract != address(0), "NFT contract address cannot be zero");
+        require(IERC721(_nftContract).ownerOf(_nftTokenId) == _seller, "Seller must own NFT");
         
         admin = _admin;
 
@@ -63,15 +65,19 @@ contract Auction {
         tokenAddress = _tokenAddress;
     }
 
+    function hasEnded() public view returns(bool) {
+        return ended;
+    }
+
     // 参与竞拍
-    function partInAuction(address _buyer, uint256 _amount) external {
+    function partInAuction(address _buyer) external payable {
         require(_buyer != address(0), "Invalid buyer address");
         require(_buyer != admin, "Admin cannot be the seller");
         require(block.timestamp >= startTime && block.timestamp <= startTime + duration && !ended, "Auction period has ended");
         
         // 需要添加币对转换为美元比较大小。包括：初始起拍价以及竞拍价都要转换后比较
-        
-        require(_amount > highestBid, "Bid amount must be higher than the current highest bid");
+        require(msg.value > startPrice, "Bid amount nust be higher than the startPrice");
+        require(msg.value > highestBid, "Bid amount must be higher than the current highest bid");
         
         
         if (highestBidder != address(0)) {
@@ -83,22 +89,31 @@ contract Auction {
             }
         }
         
-        highestBid = _amount;
+        highestBid = msg.value;
         highestBidder = _buyer;
     }
 
     // 结束拍卖
     function endAuction(address _admin) external {
+        require(ended == false, "Auction has ended");
         require(admin == _admin, "Only Admin can end auction");
         // 正常要等拍卖时间到了，才能结束拍卖，这里简单处理
-        // 1. 将拍品转移给最高出价者
-        IERC721(nftContract).safeTransferFrom(admin, highestBidder, nftTokenId);
+        // 1. 将拍品转移给最高出价者（拍品从拍品拥有者seller转移到竞拍得主）
+        // 需要让卖家预先授权合约部署地址，这样当前合约才可以操作进行转移（如下操作是需要前端执行）
+        // 卖家调用（前端或脚本）
+        // IERC721(nftContract).approve(address(this), nftTokenId);
+        // 或授权所有 NFT
+        // IERC721(nftContract).setApprovalForAll(msg.sender, true);
+        // NFTBid(address(nftContract)).forceTransfer(seller, highestBidder, nftTokenId);
+        IERC721(nftContract).safeTransferFrom(seller, highestBidder, nftTokenId);
+        
         // 2. 将钱转给卖家
         if (tokenAddress == address(0)) {
             payable(seller).transfer(highestBid);
         } else {
             IERC20(tokenAddress).transferFrom(highestBidder, seller, highestBid);
         }
+        ended = true;
     }
     
 
