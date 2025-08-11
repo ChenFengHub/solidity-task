@@ -40,6 +40,10 @@ contract Auction {
     int256 public defaultETHPrice = 3000 * 10**8;   // 3000 USD with 8 decimals
     int256 public defaultERC20Price = 1 * 10**8;    // 1 USD with 8 decimals
 
+    // 手续费相关变量
+    uint256 internal feeAmount = 0;        // 手续费金额
+    uint256 internal sellerProceeds = 0;   
+
     constructor(address _admin, 
                 address _seller, 
                 uint256 _startTime, 
@@ -195,6 +199,7 @@ contract Auction {
         highestBidder = _buyer;
         tokenAddress = _tokenAddress;  // 直接赋值 USDC/USD 的priceFeed地址
     }
+    
 
     // 结束拍卖
     function endAuction(address _admin) external {
@@ -202,21 +207,79 @@ contract Auction {
         require(admin == _admin, "Only Admin can end auction");
         // 正常要等拍卖时间到了，才能结束拍卖，这里简单处理
         // 1. 将拍品转移给最高出价者（拍品从拍品拥有者seller转移到竞拍得主）
-        // 需要让卖家预先授权合约部署地址，这样当前合约才可以操作进行转移（如下操作是需要前端执行）
-        // 卖家调用（前端或脚本）
-        // IERC721(nftContract).approve(address(this), nftTokenId);
-        // 或授权所有 NFT
-        // IERC721(nftContract).setApprovalForAll(msg.sender, true);
-        // NFTBid(address(nftContract)).forceTransfer(seller, highestBidder, nftTokenId);
+        // 该方法需要seller授权给当前协议，才能进行。这个前端进行该操作
         IERC721(nftContract).safeTransferFrom(seller, highestBidder, nftTokenId);
         
+        feeAmount = calculateDynamicFeeByToken(highestBid, tokenAddress);
+        sellerProceeds = highestBid - feeAmount;
+
         // 2. 将钱转给卖家
         if (tokenAddress == address(0)) {
-            payable(seller).transfer(highestBid);
+            payable(seller).transfer(sellerProceeds);
+            if (feeAmount > 0) {
+                payable(admin).transfer(feeAmount);
+            }
         } else {
+            // 该方法需要seller授权给当前协议，才能进行。这个前端进行该操作
             IERC20(tokenAddress).transferFrom(highestBidder, seller, highestBid);
+            if (feeAmount > 0) {
+                IERC20(tokenAddress).transferFrom(highestBidder, admin, feeAmount);
+            }
         }
         ended = true;
+    }
+
+    // 获取当前拍卖的手续费
+    function getFeeAmount() external view returns (uint256) {
+        return feeAmount;
+    }
+    
+    // 获取seller获得的金额
+    function getSellerProceeds() external view returns (uint256) {
+        return sellerProceeds;
+    }
+
+    // 计算手续费。小于1则为0
+    function calculateDynamicFeeByToken(uint256 amount, address _tokenAddress) internal view returns (uint256) {
+        if (_tokenAddress == address(0)) {
+            return calculateDynamicFee(amount);
+        } else {
+            // 为了防止因为进度丢失导致结果变成0，amout * 10^18
+            uint256 toEth = convertERC20ToETH(amount * 10 ** 18);
+            uint256 feeEthAmout = calculateDynamicFee(toEth);
+            return convertETHToERC20(feeEthAmout) / 10 ** 18;
+        }
+    }
+
+    // 动态手续费计算函数
+    function calculateDynamicFee(uint256 amount) internal pure returns (uint256) {
+        // 动态手续费规则：
+        // < 1 ETH: 5% fee
+        // 1-5 ETH: 4% fee
+        // 5-10 ETH: 3% fee
+        // > 10 ETH: 2% fee
+        
+        if (amount < 1 ether) {
+            return (amount * 5) / 100;  // 5%
+        } else if (amount < 5 ether) {
+            return (amount * 4) / 100;  // 4%
+        } else if (amount < 10 ether) {
+            return (amount * 3) / 100;  // 3%
+        } else {
+            return (amount * 2) / 100;  // 2%
+        }
+    }
+
+    function convertETHToERC20(uint256 ethAmount) internal view returns (uint256) {
+        int256 ethPrice = getETHPrice();
+        int256 erc20Price = getERC20Price();
+        return (ethAmount * uint256(ethPrice)) / uint256(erc20Price);
+    }
+
+    function convertERC20ToETH(uint256 erc20Amount) internal view returns (uint256) {
+        int256 ethPrice = getETHPrice();
+        int256 erc20Price = getERC20Price();
+        return (erc20Amount * uint256(erc20Price)) / uint256(ethPrice);
     }
     
      // 获取ETH对USD的当前价格
@@ -232,7 +295,7 @@ contract Auction {
         assembly {
             size := extcodesize(ethPriceFeedAddress)
         }
-        
+         
         if (size == 0) {
             return defaultETHPrice;
         }

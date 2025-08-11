@@ -58,7 +58,9 @@ describe("AuctionMarket Basic TEST(Not include auto upgrade)", function () {
 
         // 5. 结束竞拍
         await auctionMarket.endAuction();
-        console.log("Deployer address:", owner.address, "balance:", parseFloat(ethers.formatEther(await ethers.provider.getBalance(owner.address))).toFixed(4));
+        console.log("手续费-owner      fee:", await auctionMarket.getFeeAmount());
+        console.log("手续费-sellerProceeds:", await auctionMarket.getSellerProceeds());
+        console.log("deployer address:", owner.address, "balance:", parseFloat(ethers.formatEther(await ethers.provider.getBalance(owner.address))).toFixed(4));
         console.log("seller   address:", seller.address, "balance:", parseFloat(ethers.formatEther(await ethers.provider.getBalance(seller.address))).toFixed(4));
         console.log("buyer1   address:", buyer1.address, "balance:", parseFloat(ethers.formatEther(await ethers.provider.getBalance(buyer1.address))).toFixed(4));
         console.log("buyer2   address:", buyer2.address, "balance:", parseFloat(ethers.formatEther(await ethers.provider.getBalance(buyer2.address))).toFixed(4));
@@ -96,23 +98,24 @@ describe("AuctionMarket Basic TEST(Not include auto upgrade)", function () {
             buyer2.address,
             { value: ethers.parseEther("8") }
         );
-        console.log("begin1,myToken.address:", myTokenAddress);
         await auctionMarket.connect(buyer1).partInAuctionWithERC20(
             buyer1.address,
             24001,
             myTokenAddress
         );
-        console.log("begin2");
+        
         await auctionMarket.endAuction();
-
+        
+        console.log("第二轮：手续费-owner      fee:", await auctionMarket.getFeeAmount());
+        console.log("第二轮：手续费-sellerProceeds:", await auctionMarket.getSellerProceeds());
         console.log("第二轮：Deployer address:", owner.address, "balance:", parseFloat(ethers.formatEther(await ethers.provider.getBalance(owner.address))).toFixed(4));
         console.log("第二轮：seller2   address:", seller2.address, "balance:", parseFloat(ethers.formatEther(await ethers.provider.getBalance(seller2.address))).toFixed(4));
         console.log("第二轮：buyer1   address:", buyer1.address, "balance:", parseFloat(ethers.formatEther(await ethers.provider.getBalance(buyer1.address))).toFixed(4));
         console.log("第二轮：buyer2   address:", buyer2.address, "balance:", parseFloat(ethers.formatEther(await ethers.provider.getBalance(buyer2.address))).toFixed(4));
-        console.log("nft owner:", await nft.ownerOf(tokenId2));
-        console.log("seller2 erc20 balance:", await myToken.balanceOf(seller2.address));
-        console.log("buyer1  erc20 balance:", await myToken.balanceOf(buyer1.address));
-        console.log("buyer2  erc20 balance:", await myToken.balanceOf(buyer2.address));
+        console.log("第二轮：nft owner:", await nft.ownerOf(tokenId2));
+        console.log("第二轮：seller2 erc20 balance:", await myToken.balanceOf(seller2.address));
+        console.log("第二轮：buyer1  erc20 balance:", await myToken.balanceOf(buyer1.address));
+        console.log("第二轮：buyer2  erc20 balance:", await myToken.balanceOf(buyer2.address));
     });
 
 });

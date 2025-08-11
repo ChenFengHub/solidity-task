@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\MySpace\\code\\web3\\my\\task\\solidity-task\\task03\\contracts\\auctionmarket\\Auction.sol": {
-      "lastModificationDate": 1754790934222,
-      "contentHash": "1e5b01cc3e511cbbc6f03045317de67f",
+      "lastModificationDate": 1754876916093,
+      "contentHash": "70ccb256570290ccb5f861c467b845c9",
       "sourceName": "contracts/auctionmarket/Auction.sol",
       "solcConfig": {
         "version": "0.8.28",
@@ -651,8 +651,8 @@
       ]
     },
     "C:\\MySpace\\code\\web3\\my\\task\\solidity-task\\task03\\contracts\\auctionmarket\\AuctionMarket.sol": {
-      "lastModificationDate": 1754786179306,
-      "contentHash": "b9bf6e2b7e1901a2f53a913fc048c829",
+      "lastModificationDate": 1754875906353,
+      "contentHash": "d15a1d83e06c42db74919cd5764fbbe0",
       "sourceName": "contracts/auctionmarket/AuctionMarket.sol",
       "solcConfig": {
         "version": "0.8.28",

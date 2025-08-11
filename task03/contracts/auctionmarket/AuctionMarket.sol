@@ -58,4 +58,19 @@ contract AuctionMarket is Initializable, UUPSUpgradeable {
         require(msg.sender == owner, "Only owner can upgrade");
     }
 
+    // 获得当前最高价（美金）
+    function getHighestBidUDS() public view returns(uint256) {
+        return curAuction.getHighestBidUDS();
+    }
+    
+    // 获取当前拍卖的手续费
+    function getFeeAmount() external view returns (uint256) {
+        return curAuction.getFeeAmount();
+    }
+    
+    // 获取seller获得的金额
+    function getSellerProceeds() external view returns (uint256) {
+        return curAuction.getSellerProceeds();
+    }
+
 }
