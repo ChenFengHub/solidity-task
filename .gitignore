@@ -24,3 +24,4 @@ package.json
 /.deps
 /artifacts
 /task03/artifacts/*
+.env

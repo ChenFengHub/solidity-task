@@ -11,7 +11,11 @@ module.exports = {
     },
     hoodi: {
       url: `https://hoodi.infura.io/v3/${process.env.INFURA_API_KEY}`,
-      accounts: [process.env.PRIVATE_KEY]
+      accounts: [
+        process.env.PRIVATE_KEY,
+        process.env.PRIVATE_KEY_2,
+        process.env.PRIVATE_KEY_3
+      ]
     },
     fuji: {
       url: `https://api.avax-test.network/ext/bc/C/rpc`,

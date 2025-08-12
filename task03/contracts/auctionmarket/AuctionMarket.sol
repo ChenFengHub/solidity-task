@@ -51,11 +51,10 @@ contract AuctionMarket is Initializable, UUPSUpgradeable {
         curAuction.endAuction(owner);
     }
 
-    //  代理合约调用 upgradeTo(address)）并通过 delegatecall 触发方法
-    //  逻辑合约中的_authorizeUpgrade(address)
-    function _authorizeUpgrade(address) internal view override {
-        // 只有管理员可以升级合约
-        require(msg.sender == owner, "Only owner can upgrade");
+    // 结束拍卖(以跨链实现NFT的转移)
+    function endAuctionWithCrossChain() external {
+        require(msg.sender == owner, "Only owner can end auction");
+        curAuction.endAuctionWithCrossChain(owner);
     }
 
     // 获得当前最高价（美金）
@@ -72,5 +71,26 @@ contract AuctionMarket is Initializable, UUPSUpgradeable {
     function getSellerProceeds() external view returns (uint256) {
         return curAuction.getSellerProceeds();
     }
+
+    function setReceiverAddress(address _receiverAddress) external {
+        curAuction.setReceiverAddress(_receiverAddress);
+    }
+
+    function getReceiverAddress() external view returns (address) {
+        return curAuction.receiverAddress();
+    }
+
+    function setRouter(address _router) external {
+        curAuction.setRouter(_router);
+    }
+
+    //  代理合约调用 upgradeTo(address)）并通过 delegatecall 触发方法
+    //  逻辑合约中的_authorizeUpgrade(address)
+    function _authorizeUpgrade(address) internal view override {
+        // 只有管理员可以升级合约
+        require(msg.sender == owner, "Only owner can upgrade");
+    }
+
+    
 
 }

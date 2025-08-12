@@ -11,4 +11,5 @@
     * 本地测试即可：进入task03目录，执行：npx hardhat test test/AuctionMarketBasic.js
 * 跨链功能测试
     * 先部署跨链合约节点，使用sepolia测试网，部署脚本：script/AuctionNFTReceiverDeploy.js，执行指令： npx hardhat run script/AuctionNFTReceiverDeploy.js --network sepolia
-    * 执行测试脚本，发起跨链请求，使用hoodi测试脚本：test/CrossChainTest.js，执行指令：
+    * 执行测试脚本，发起跨链请求，使用hoodi测试脚本：test/CrossChainTest.js，执行指令：npx hardhat test test/CrossChainTest.js --network hoodi
+* 合约部署/升级（采用UUPS）
