@@ -3,7 +3,7 @@ const { expect } = require("chai");
 
 describe("AuctionMarket Basic TEST(Not include auto upgrade)", function () { 
 
-    it("test auctoinMarket.sol", async () => {
+    it("测试单链相关功能", async () => {
         const [owner, seller, buyer1, buyer2, seller2] = await ethers.getSigners();
         console.log("Deployer address:", owner.address, "balance:", await ethers.provider.getBalance(owner.address));
         console.log("seller   address:", seller.address, "balance:", await ethers.provider.getBalance(seller.address));
@@ -117,5 +117,7 @@ describe("AuctionMarket Basic TEST(Not include auto upgrade)", function () {
         console.log("第二轮：buyer1  erc20 balance:", await myToken.balanceOf(buyer1.address));
         console.log("第二轮：buyer2  erc20 balance:", await myToken.balanceOf(buyer2.address));
     });
+
+
 
 });

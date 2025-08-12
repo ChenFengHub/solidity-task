@@ -9,6 +9,8 @@ import "../bid/NFTBid.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "../erc20/MyToken.sol";
+import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
+import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.sol";
 
 contract Auction {
     using Strings for uint256;
@@ -44,6 +46,12 @@ contract Auction {
     uint256 internal feeAmount = 0;        // 手续费金额
     uint256 internal sellerProceeds = 0;   
 
+    // 跨链信息
+    IRouterClient public i_router;
+    address routerAddress = 0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59; // 默认是sepolia测试网路由地址
+    uint64 chainSelector = 16015286601757825753;   // 默认是sepolia测试网链选择器地址
+    address receiverAddress;   // 接收合约的地址
+    
     constructor(address _admin, 
                 address _seller, 
                 uint256 _startTime, 
@@ -83,6 +91,20 @@ contract Auction {
 
         // 初始化预言机的小数位数
         initializePriceFeedDecimals();
+    }
+
+    // 跨链相关方法
+    function setRouter(address _router) public {
+        i_router = IRouterClient(routerAddress);
+    }
+    function setChainSelector(uint64 _chainSelector) public {
+        chainSelector = _chainSelector;
+    }
+    function setRouterAddress(address _routerAddress) public {
+        routerAddress = _routerAddress;
+    }
+    function setReceiverAddress(address _receiverAddress) public {
+        receiverAddress = _receiverAddress;
     }
 
     // 获取当前最高的出价者的出价（美金展示）
@@ -210,6 +232,48 @@ contract Auction {
         // 该方法需要seller授权给当前协议，才能进行。这个前端进行该操作
         IERC721(nftContract).safeTransferFrom(seller, highestBidder, nftTokenId);
         
+        feeAmount = calculateDynamicFeeByToken(highestBid, tokenAddress);
+        sellerProceeds = highestBid - feeAmount;
+
+        // 2. 将钱转给卖家
+        if (tokenAddress == address(0)) {
+            payable(seller).transfer(sellerProceeds);
+            if (feeAmount > 0) {
+                payable(admin).transfer(feeAmount);
+            }
+        } else {
+            // 该方法需要seller授权给当前协议，才能进行。这个前端进行该操作
+            IERC20(tokenAddress).transferFrom(highestBidder, seller, highestBid);
+            if (feeAmount > 0) {
+                IERC20(tokenAddress).transferFrom(highestBidder, admin, feeAmount);
+            }
+        }
+        ended = true;
+    }
+
+    // 结束拍卖(以跨链实现NFT的转移)
+    function endAuctionWithCrossChain(address _admin) external {
+        require(ended == false, "Auction has ended");
+        require(admin == _admin, "Only Admin can end auction");
+        // 将NFT转移到NFT中，则原用户不再拥有该NFT，认为被锁定/销毁
+        IERC721(nftContract).safeTransferFrom(seller, address(this), nftTokenId);
+        
+        // 2. 构造CCIP消息（包含NFT元数据）
+        Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
+            receiver: abi.encode(receiverAddress), 
+            data: abi.encode(nftContract, nftTokenId, highestBid, NFTBid(nftContract).getTokenURI(nftTokenId)), // 传递关键数据
+            tokenAmounts: new Client.EVMTokenAmount[](0),          // 无代币转移
+            extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 300_000})),
+            feeToken: address(0) // 用原生代币（如ETH）支付手续费
+        });
+
+        // 3. 计算手续费并发送跨链消息
+        uint256 fee = i_router.getFee(chainSelector, message);
+        require(address(this).balance >= fee, "Insufficient fee");
+        // 发送跨链消息
+        bytes32 messageId = i_router.ccipSend(chainSelector, message);
+
+
         feeAmount = calculateDynamicFeeByToken(highestBid, tokenAddress);
         sellerProceeds = highestBid - feeAmount;
 
