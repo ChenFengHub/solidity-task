@@ -17,8 +17,8 @@ contract Auction {
     address internal admin;
     address internal seller;
     // 拍品（NFT）的合约地址
-    address internal nftContract;
-    uint256 internal nftTokenId;
+    address public nftContract;
+    uint256 public nftTokenId;
     uint256 internal startTime = 0;
     // 初始价格。保存转化后的美金
     uint256 internal startPrice = 0;
@@ -106,6 +106,11 @@ contract Auction {
     receive() external payable {
         // 确保接收到的金额大于0
         require(msg.value > 0, "Received value must be greater than 0");
+    }
+
+    function setNftContract(address _nftContract) external { 
+        require(nftContract == address(0), "NFT contract has been set");
+        nftContract = _nftContract;
     }
 
     // 跨链相关方法。_router是发送方部署测试网络的ccip 路由地址

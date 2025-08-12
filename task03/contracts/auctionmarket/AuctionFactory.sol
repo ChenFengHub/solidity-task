@@ -10,7 +10,7 @@ contract AuctionFactory {
     uint256 public auctionsIndex = 0;
     address internal owner;
 
-    constructor(address _owner) {
+    function setOwner(address _owner) public {
         owner = _owner;
     }
 

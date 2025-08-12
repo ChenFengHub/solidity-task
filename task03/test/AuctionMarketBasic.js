@@ -25,10 +25,20 @@ describe("AuctionMarket Basic TEST(Not include auto upgrade)", function () {
         console.log("NFT owner:", await nft.ownerOf(tokenId));
 
         // 2. 创建AuctionMarket
+        const AuctoinFacotry = await ethers.getContractFactory("AuctionFactory");
+        const auctionFactory = await AuctoinFacotry.deploy();
+        await auctionFactory.waitForDeployment();
+        const auctionFactoryAddress = await auctionFactory.getAddress();
+        console.log("AuctionFactory deployed to:", auctionFactoryAddress);
+       
         const AuctionMarket = await ethers.getContractFactory("AuctionMarket");
         const auctionMarket = await AuctionMarket.connect(owner).deploy();
         await auctionMarket.waitForDeployment();
         const auctionMarketAddress = await auctionMarket.getAddress();
+
+        let setFactoryTx = await auctionMarket.setAuctionFactory(auctionFactoryAddress);
+        await setFactoryTx.wait();
+        
         console.log("AuctionMarket deployed to:", auctionMarketAddress);
 
         // 3. 创建Auction

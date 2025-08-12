@@ -7,7 +7,7 @@ import "./Auction.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-contract AuctionMarket is Initializable, UUPSUpgradeable {
+contract AuctionMarketV2 is Initializable, UUPSUpgradeable {
 
     Auction public curAuction;
 
@@ -109,6 +109,8 @@ contract AuctionMarket is Initializable, UUPSUpgradeable {
         require(msg.sender == owner, "Only owner can upgrade");
     }
 
-    
+    function test() public returns(string memory){ 
+        return "test";
+    }       
 
 }

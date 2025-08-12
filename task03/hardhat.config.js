@@ -1,9 +1,16 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
+require("hardhat-deploy");
+require("@openzeppelin/hardhat-upgrades");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: "0.8.28",
+  namedAccounts: {
+    deployer: 0,
+    user1: 1,
+    user2: 2,
+  },
   networks: {
     sepolia: {
       url: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,  // 从sepolia中随便选个可用的地址，从https://developer.metamask.io/中获取

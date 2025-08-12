@@ -24,9 +24,16 @@ describe("CrossChainTest", function () {
         const tokenId = 1;
         await nft.mintNFT(seller.address, "http://bafybeihivnzqlsfy3nhjchv3auw4raba5xyr2j3skclhtiwnswscdusclq.ipfs.localhost:8080/");
 
+        const AuctoinFacotry = await ethers.getContractFactory("AuctionFactory");
+        const auctionFactory = await AuctoinFacotry.deploy();
+        await auctionFactory.waitForDeployment();
+        const auctionFactoryAddress = await auctionFactory.getAddress();
+        console.log("AuctionFactory deployed to:", auctionFactoryAddress);
+
         const AuctionMarket = await ethers.getContractFactory("AuctionMarket");
         const auctionMarket = await AuctionMarket.deploy();
         await auctionMarket.waitForDeployment();
+        await auctionMarket.setAuctionFactory(auctionFactoryAddress);
 
         let creationTx = await auctionMarket.createAuctoin(
             seller.address,
