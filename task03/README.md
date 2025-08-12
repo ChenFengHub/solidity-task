@@ -34,4 +34,4 @@
     * 部署+升级指令：npx hardhat deploy
     ![执行结果](./pic/部署升级指令执行结果.png)
     * 部署+升级的单元测试，实现升级，指令：npx hardhat test test/DeployUpgradeTest.js
-    [执行结果](./pic/测似升级单元测试结果.png)
+    ![执行结果](./pic/测似升级单元测试结果.png)
